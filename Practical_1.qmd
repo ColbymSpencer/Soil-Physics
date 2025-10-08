@@ -1,0 +1,161 @@
+---
+title: "Seminar1"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup packages}
+# import packages
+library(tidyverse)
+library(readxl)
+library(readr)
+```
+
+```{r import data}
+#import data
+cropland <- read_csv("Data_Problem_1_cropland.csv") |>
+  mutate('land_use' = 'cropland')
+forest <- read_csv("Data_Problem_1_forest.csv")|>
+  mutate('land_use' = 'forest')
+grassland <- read_csv("Data_Problem_1_grassland.csv")|>
+  mutate('land_use' = 'grassland')
+
+#estimated porosity per land use
+porosity_table <- data.frame(
+  depth = c(10, 40, 80),
+  cropland = c(0.440, 0.379, 0.397),
+  forest = c(0.678, 0.486, 0.432),
+  grassland = c(0.488, 0.394, 0.419)
+)
+```
+
+```{r tidy data}
+
+p1d <- #practical 1 data
+  rbind(cropland, forest) |> #combine datasets
+  rbind(grassland) |>
+  rename('10' = 'Port1', #ports were at different depths
+         '40' = 'Port2',
+         '80' = 'Port3') |>
+  pivot_longer(cols = c('10','40','80'),
+               names_to = 'depth',
+               values_to = 'permittivity') |>
+  mutate(depth = as.numeric(depth),
+         permittivity = as.numeric(permittivity),
+         'timestamp' = dmy_hm(Timestamps)
+         ) |>
+  select(c(5,2,3,4)) #remove og timestamps and reorder cols
+
+# tidy porosity table
+porosity_table <- porosity_table|>
+  pivot_longer(cols = all_of(c('cropland','forest','grassland')),
+               names_to = 'land_use',
+               values_to = 'porosity')
+```
+
+### QUESTION 1
+
+Which type of sensor (i.e., based on which method) would you use for accurately monitoring soil-water content on an hourly basis at a given depth at a relatively low cost?
+
+```{r}
+
+```
+
+### QUESTION 2
+
+Determine the volumetric soil-water content (in m 3 m -3 ) from the r data (sensor output) recorded per hour from 1 January 2021 till 29 September 2022, per sensor and land use, and plot it over complete period. Volumetric soil water content: $$ \theta_v = V_w / V $$ $$ \theta_v = \theta_g*\frac{\rho_b}{\rho_w}$$ Bulk Density $$ \phi  = 1 - \frac{\rho_b}{\rho_s}$$
+
+Join the estimated soil porosity by depth / soil type
+
+```{r}
+p1d <- left_join(p1d, porosity_table, join_by(land_use, depth))
+```
+
+we assume the value for relative permittivity of the soil is 4 - the conventional value for solid minerals (no organic matter)
+
+```{r}
+p1d <- p1d |>
+  mutate(rel_permittivity_solids = 4)
+```
+
+calculate moisture content (theta) using the derived equation: $$\theta = \frac{ \sqrt{\epsilon_r} - [1 + (\sqrt{\epsilon_{rs} - 1)(1-\phi)]}{8}$$
+
+```{r}
+p1d <- p1d |>
+  mutate(moisture_content = ((sqrt(permittivity) - (1+(sqrt(rel_permittivity_solids) - 1)*(1-porosity)))/8))
+```
+
+```{r}
+ggplot(data = p1d) +
+  geom_line(aes(x = timestamp, y = moisture_content,
+                  group = land_use,color = land_use))
+```
+
+```{r}
+p1d |>
+  filter(moisture_content <= porosity & moisture_content >= 0) |>
+ggplot() +
+  geom_smooth(aes(x = timestamp, y = moisture_content,
+                  group = land_use,color = land_use)) +
+  # scale_x_datetime(limits = c(as.POSIXct("2021-01-01 00:00"), as.POSIXct("2021-01-10 00:00"))) +
+  facet_wrap(vars(depth))
+```
+
+compare soil moisture at different depths within one land use
+
+```{r}
+p1d |>
+  filter(moisture_content <= 1 & moisture_content >= 0) |>
+  mutate(depth = as.factor(depth)) |>
+ggplot() +
+  geom_line(aes(x = timestamp, y = moisture_content,
+                  group = depth,color = depth)) +
+  # scale_x_datetime(limits = c(as.POSIXct("2021-01-01 00:00"), as.POSIXct("2021-01-10 00:00"))) +
+  facet_wrap(vars(land_use))
+```
+
+### QUESTION 3
+
+If we assume that\
+\* sensor 1 represents  between the soil surface and -25 cm depth (25cm)\
+\* sensor 2 between -25 and -45 cm depth (20cm)\
+\* sensor 3 between -45 and -100 cm depth (55cm) Calculate the soil-water storage (in mm) at 19 April 2022 13:00 and at 7 May 2022 13:00 from the soil surface till -80 cm depth per land use.
+
+Soil water storage is the weighted sum of moisture content x depth that the moisture content is representative of
+
+```{r}
+p1d |>
+  mutate(water_storage = case_when(
+    depth == 10 ~ moisture_content*25,
+    depth == 40 ~ moisture_content*20,
+    depth == 80 ~ moisture_content*55
+  )) |>
+  group_by(timestamp, land_use) |>
+  summarise(sum(water_storage))
+```
+
+### QUESTION 4
+
+Did the roots of the plants per land use reach a depth of -15 cm between 19 April 2022 and 7 May 2022? And do you see any root activity between 9 and 27 January 2022?
+
+```{r}
+
+```
+
+### QUESTION 5
+
+Would there be significant drainage at a depth of -80 cm per land use during this period?
+
+```{r}
+
+```
+
+### QUESTION 6
+
+Calculate evapotranspiration (in mm) in the top 80 cm of the soil during this period per land use No runoff, no lateral subsurface water flow, no irrigation Precipitation was 9.9 mm (at all three land uses → weather station Zingem – waterinfo.be)
+
+```{r}
+
+```
