@@ -1,0 +1,280 @@
+---
+title: "Exercises"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+
+```
+
+### Part I
+
+#### I.2
+
+A private company would like to construct a large landfill on a 5-ha piece of land. On average, the Bt horizon of the area is 100 cm thick and contains 45% of clay and 38% of silt. The clay fraction of the Bt horizon tends to be kaolinitic. The company would like to use the soil from the Bt horizon at the site to construct the liner for the landfill. In order to achieve the proper saturated hydraulic conductivity for the liner (\<10 −9 m s −1 ; see Part 3), the clay content of the liner must be at least 55% and it must be compacted to a bulk density ρ b = 1.65 Mg m −3 . At the time of extraction the average bulk density of this horizon ρ b = 1.3 Mg m −3 . The landfill liner must be 60 cm thick.
+
+1.  Determine the amount of pure clay that must be added to the soil, in kg clay per 100kg soil, to reach the proper clay content.
+
+2.  The company can buy pure ovendried clay. Determine the minimum amount of clay that must be purchased for building the liner for a 0.4-ha landfill cell.
+
+3.  Determine the volume of the Bt horizon that must be excavated to build the liner for this 0.4-ha landfill cell (and then mixed with new clay).
+
+4.  The new pure ovendry clay is transported to the site by 12-ton trucks. How much truck loads of soil must be transported?
+
+```{r 1.2}
+# Bt layer data
+clay_bt = 0.45 # percent clay
+silt_bt = 0.38 # percent silt
+bd_bt = 1.3    # bulk density (Mg/m3)
+area_bt = 50000   # m2
+depth = 1      # m
+
+# liner layer data
+clay_l = 0.55  # percent clay
+bd_l = 1.65    # bulk density (Mg/m3)
+area_l = 4000    # m2
+depth_l = 0.6    # m
+
+# 1. addtional clay raio
+acr <- (clay_l - clay_bt)/(1-clay_l) #(mass/mass)
+acr
+
+# 2.total clay needed
+mass_soil <- area_l * depth_l * bd_l # Mg
+clay_additional <- mass_soil * acr / (acr+1) # Mg
+clay_additional
+
+# 3. volume excavated
+1 - acr / (1+acr)
+
+
+# 4. how many truckloads
+mpt <- 12 # mass(Mg) per truck
+clay_additional / mpt
+```
+
+#### I.3
+
+The Bt horizon of a soil has a strong, medium subangular blocky structure. The average bulk density of individual aggregates ρ b agg = 1.5 Mg m −3 and the average for the horizon itself ρ b = 1.35 Mg m −3 . Assume that the particle density ρ s = 2.68 Mg m −3 . 1. Determine the total porosity of the soil. 2. Determine the total porosity within the aggregates. 3. Determine the interaggregate porosity.
+
+```{r}
+# densities (Mg/m3)
+bd = 1.35
+bd_agg = 1.5
+pd = 2.68 # particle density
+
+# 1 porosity
+porosity  = 1- bd/pd
+
+# 2 porosity within aggregates
+porosity_agg = 1 -bd_agg / pd
+
+# 3 interaggregate porosity
+v = 1 #(m3)
+m_soil = bd*v
+v_agg = m_soil/bd_agg #volume (m3)
+
+porosity_interaggg = (v-v_agg)/v # (m3 / m3)
+```
+
+#### I.4
+
+A soil is made up of identical spherical aggregates of bulk density ρb agg = 1.3 Mg m−3 whose solid phase has a particle density of 2.65 Mg m−3 . The aggregates are packed into an arrangement with an interaggregate porosity of 0.4 m3 m−3 . 1. Calculate the bulk density of the soil. 2. Calculate the aggregate porosity of the soil 3. Calculate the porosity of the soil
+
+```{r}
+# given
+bd_agg = 1.3     # bulk density aggregates(Mg/m3)
+pd = 2.65        # particle density (Mg/m3)
+p_interAgg = 0.4 # interaggregate porosity (m3/m3)
+
+# 1 bulk density
+bd = (1-p_interAgg) * bd_agg
+
+# 2 aggregate porosity
+p_agg = 1-bd_agg/pd
+
+# 3 porosity
+p = 1-bd/pd
+```
+
+#### I.5
+
+A soil has a bulk density ρb = 1.55 Mg m −3 and contains 55 g organic carbon per 1 kg of soil. The mineral fraction has a particle density ρ m of 2.68 Mg m −3 and the organic matter a particle density ρ om of 1.4 Mg m −3 . Calculate the soil’s void ratio.
+
+```{r}
+p_b = 1.55   # bulk density (Mg/m3)
+oc = 55/1000 # percent organic carbon
+p_m = 2.68   # particle density mineral(Mg/m3)
+p_om = 1.4   # particle density organic matter(Mg/m3)
+
+
+oc_to_om = 1.72 # CONVERSION FACTOR OC TO OM, not given
+
+
+om = oc*oc_to_om # percent organic matter
+
+m = 1-om # percent mineral
+
+# particle density of solids
+p_s = 1/(m/p_m + om/p_om)
+
+# porosity
+porosity  = 1-p_b/p_s
+
+# void ratio
+vr = porosity/(1-porosity)
+```
+
+#### I.\*\*6
+
+Soil cores have been taken from the tillage pan of two fields with texture as given in Table 1. Bulk density was determined and values are given in Table 1 as well.Which fields have a compacted tillage pan?
+
+```{r}
+library(tidyverse)
+read.table(header = FALSE, 
+           text = '1 0.79 0.12 0.09 1502 
+           2 0.18 0.34 0.48 1427') |>
+  rename('field' = 1, 
+         'sand_content' = 2,
+         'silt_content'  =3,
+         'clay_content' = 4,
+         'bulk_density' =5)
+```
+
+#### I.\*\*7
+
+The mean penetration resistance obtained with a penetrologger within an agricultural field is shown in Fig. 1. The average rooting depth of various crops can e.g. be found in FAO’s widely used Irrigation and Drainage Paper 56 (online available). Assume a 50% root growth at a penetration resistance of 1.6 MPa. Indicate which of the following crops would be suitable for cultivation in this field: broccoli, carrots, lettuce, strawberries, winter wheat, maize.
+
+```{r}
+
+```
+
+#### I.\*\*8
+
+Consider the Bottelare experimental site with three different land uses, farm land, grassland and forest. The sand, silt and clay content of the soil measured at three depths per land use is given in Table 2.
+
+1.  Which basic soil property would you determine to evaluate the physical quality of the soil and which one to calculate the carbon stock of the soil under the tree land uses?
+
+2.  Which of the three land uses do you expect to have the lowest porosity at −10, −40 and −80 cm depth? Consider porosity at the time of harvesting the crop on the farmland. And which the highest? Explain why.
+
+In order to determine the above soil properties, undisturbed soil cores with a volume of 100 cm 3 were taken and transported to the laboratory. The soil was removed from the cores, placed in a metal container and oven-dried at 105 ◦ C for at least 24 h and weighed. The sample was then placed in a muffle oven at 550 ◦ C for 3 hours to determine its organic matter content (SOM) by loss-on-ignition. The average weights (of four replicates per land use and depth) are given in the file Data_Problem_I-8.xlxs on the Ufora course site (under the submodule Data Exercises in Soil Physics ).
+
+3.  Calculate the bulk density of the soil at −10, −40 and −80 cm depth per land use (in Mg m −3 ). You can use any program of your choice to make your calculations.
+
+4.  Calculate the particle density of the soil at −10, −40 and −80 cm depth per land use (in Mg m −3 ). We consider that the particle density of the mineral fraction is 2.65 Mg m −3 and that of the organic fraction 1.4 m −3.
+
+5.  Calculate the porosity of the soil (use appropriate units) at −10, −40 and −80 cm depth per land use. Verify your answer given to question 2 above.
+
+6.  Calculate for each land use the soil organic carbon stock in Mg of the top 30 cm of the soil per hectare. Consider a constant bulk density in the top 30 cm, and a soil organic carbon to soil organic matter conversion factor of 2.
+
+7.  Based on the values you calculated, which layer under which land use would you consider as being compacted? \### Part II \#### II.1 A wet undisturbed soil sample with a mass of 1000 g and a volume of 640 cm 3 is dried at 105 ◦ C until a constant weight, being 800 g, is reached. The density of the solid particles ρ s is 2650 kg m −3 and the density of water ρ w is 1000 kg m −3 .
+
+8.  Calculate the bulk density ρ b of the soil sample, its porosity ϕ, and its gravimetric θ g and volumetric moisture content θ v .
+
+9.  If the soil would be saturated, what would be theoretically its gravimetric water content?
+
+```{r}
+m_wet = 1000      # mass wet(g)
+v = 640           # volume (cm3)
+m_dry = 800       # dry mass (g)
+p_solids = 2650   # density of solids (kg/m3)
+p_water = 1000    # density of water (kg/m3)
+
+
+# bulk density
+bulk_density = m_dry/v              # (g/cm3)
+bulk_density = m_dry/v /1000 *100^3 # (kg/m3)
+
+# porosity
+porosity = 1- bulk_density/p_solids # porosity
+
+# gravimetric moisture content
+# mass fraction of water vs oven dry soil
+mc_g = (m_wet-m_dry)/m_dry
+
+# volumetric mositure content
+# volume fraction of water vs oven dry soil
+mc_v = mc_g * bulk_density / p_water
+
+# *** saturated soil's gravimetric water content
+# saturated means all pores are filled with water
+mc_vs = (porosity*p_water) / ((1-porosity)*p_solids)
+```
+
+### Part II
+#### II.2
+
+Consider a clayey soil profile of 1 m depth, with a gravimetric water content of 0.15 kg kg −1 in the upper 0.4 m and 0.25 kg kg −1 in the lower 0.6 m. The bulk density in the upper 0.4 m is 1.20 Mg m −3 and in the lower 0.6 m 1.40 Mg m −3 . How much water (in m3 ) does the soil profile contain per hectare?
+
+```{r}
+## Given 
+area = 1      # (ha)
+area = 10000  # (m2)
+
+d_upper  = 0.4    # depth upper profile (m)
+gwc_upper = 0.15  # gravimetric water content (kg/kg)
+bd_upper = 1.2    # bulk density (Mg/m3)
+
+d_lower = 0.6     # depth lower profile(m)
+gwc_lower = 0.25  # gravimetric water content (kg/kg)
+bd_lower = 1.4    # bulk density (Mg/m3)
+
+## assumed
+p_water = 1000
+# total water volume
+m_water = d_upper*gwc_upper + d_lower*gwc_lower
+
+```
+
+#### II.3
+
+#### II.4
+
+#### II.5
+
+#### II.6
+
+#### II.7
+
+#### II.8
+
+#### II.9
+
+#### II.10
+
+#### II.11
+
+#### II.12
+
+#### II.13
+
+#### II.14
+
+#### II.15
+
+#### II.16
+
+#### II.17
+
+#### II.18
+
+#### II.19
+
+#### II.20
+
+#### II.21
+
+#### II.22
+
+#### II.23
+
+#### II.24
+
+#### II.25
+
+#### II.26
+
+#### II.27
